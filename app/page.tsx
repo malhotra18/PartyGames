@@ -47,7 +47,7 @@ const gameIds: GameId[] = ['game-1', 'game-2', 'game-3'];
 const contentVersions: Record<GameId, number> = {
   'game-1': 1,
   'game-2': 2,
-  'game-3': 4,
+  'game-3': 5,
 };
 
 function blankProgress(gameId: GameId): GameProgress {

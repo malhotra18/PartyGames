@@ -236,15 +236,15 @@ const priceRounds: PriceRound[] = [
   },
   {
     kind: 'price',
-    question: 'Guess the price of this full-size Goliath barn.',
-    price: 13499.99,
-    image: '/game3/24.jpg',
-  },
-  {
-    kind: 'price',
     question: 'Guess the price of this 4-person barrel sauna.',
     price: 3999.99,
     image: '/game3/25.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of this full-size Goliath barn.',
+    price: 13499.99,
+    image: '/game3/24.jpg',
   },
 ];
 
