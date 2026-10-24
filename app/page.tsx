@@ -52,12 +52,21 @@ function otherTeam(team: Team): Team {
 }
 
 function ChoiceSlide({
+  disabled,
+  onSelect,
   round,
   revealed,
+  selectedOption,
 }: {
+  disabled: boolean;
+  onSelect: (index: number) => void;
   round: ChoiceRound;
   revealed: boolean;
+  selectedOption: number | null;
 }) {
+  const selectedIsCorrect =
+    selectedOption !== null && selectedOption === round.correctIndex;
+
   return (
     <div className="trivia-stage">
       <div className="trivia-photo">
@@ -67,22 +76,39 @@ function ChoiceSlide({
       </div>
       <div className="trivia-copy">
         <p className="trivia-kicker">
-          {revealed ? 'Answer revealed' : 'Choose the state'}
+          {revealed
+            ? 'Answer revealed'
+            : selectedOption === null
+              ? 'Select the team’s answer'
+              : selectedIsCorrect
+                ? 'Correct answer'
+                : 'Incorrect answer'}
         </p>
         <h2>{round.question}</h2>
         <div className="trivia-options">
           {round.options.map((option, index) => {
             const isCorrect = index === round.correctIndex;
+            const isSelected = index === selectedOption;
             return (
-              <div
+              <button
+                aria-pressed={isSelected}
                 className={`trivia-option ${
                   revealed
                     ? isCorrect
                       ? 'trivia-option-correct'
-                      : 'trivia-option-muted'
-                    : ''
+                      : isSelected
+                        ? 'trivia-option-incorrect'
+                        : 'trivia-option-muted'
+                    : isSelected
+                      ? isCorrect
+                        ? 'trivia-option-correct'
+                        : 'trivia-option-incorrect'
+                      : ''
                 }`}
+                disabled={disabled || selectedOption !== null}
                 key={option}
+                onClick={() => onSelect(index)}
+                type="button"
               >
                 <span className="trivia-letter">
                   {String.fromCharCode(65 + index)}
@@ -91,7 +117,10 @@ function ChoiceSlide({
                 {revealed && isCorrect && (
                   <Check aria-hidden="true" className="ml-auto size-5" />
                 )}
-              </div>
+                {isSelected && !isCorrect && (
+                  <CircleX aria-hidden="true" className="ml-auto size-5" />
+                )}
+              </button>
             );
           })}
         </div>
@@ -111,6 +140,7 @@ export default function Home() {
     useState<Record<GameId, GameProgress>>(initialProgress);
   const [revealed, setRevealed] = useState(false);
   const [passed, setPassed] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -182,6 +212,10 @@ export default function Home() {
   const starter: Team = roundIndex % 2 === 0 ? 'A' : 'B';
   const activeTeam = passed ? otherTeam(starter) : starter;
   const availablePoints = passed ? 10 : 20;
+  const choiceIsCorrect =
+    round.kind === 'choice' && selectedOption !== null
+      ? selectedOption === round.correctIndex
+      : null;
 
   const scores = useMemo(
     () =>
@@ -208,6 +242,7 @@ export default function Home() {
     setSelectedGame(gameId);
     setRevealed(false);
     setPassed(false);
+    setSelectedOption(null);
   }
 
   function goToRound(nextRound: number) {
@@ -218,6 +253,36 @@ export default function Home() {
     }));
     setRevealed(false);
     setPassed(false);
+    setSelectedOption(null);
+  }
+
+  function selectChoice(index: number) {
+    if (
+      round.kind !== 'choice' ||
+      roundResult ||
+      revealed ||
+      selectedOption !== null
+    ) {
+      return;
+    }
+    setSelectedOption(index);
+    if (index === round.correctIndex) setRevealed(true);
+  }
+
+  function clearChoice() {
+    setSelectedOption(null);
+    setRevealed(false);
+  }
+
+  function passQuestion() {
+    setPassed(true);
+    setSelectedOption(null);
+    setRevealed(false);
+  }
+
+  function finishWithoutPoints() {
+    setRevealed(true);
+    recordResult(0);
   }
 
   function recordResult(points: number) {
@@ -246,7 +311,8 @@ export default function Home() {
       history: current.history.slice(0, -1),
     }));
     setPassed(false);
-    setRevealed(true);
+    setSelectedOption(null);
+    setRevealed(game.rounds[lastRound]?.kind === 'image');
   }
 
   function resetGame() {
@@ -262,6 +328,7 @@ export default function Home() {
     }));
     setRevealed(false);
     setPassed(false);
+    setSelectedOption(null);
   }
 
   async function enterFullscreen() {
@@ -364,7 +431,13 @@ export default function Home() {
                   src={revealed ? round.answerImage : round.questionImage}
                 />
               ) : (
-                <ChoiceSlide revealed={revealed} round={round} />
+                <ChoiceSlide
+                  disabled={Boolean(roundResult)}
+                  onSelect={selectChoice}
+                  revealed={revealed}
+                  round={round}
+                  selectedOption={selectedOption}
+                />
               )}
               <div
                 aria-hidden="true"
@@ -416,7 +489,15 @@ export default function Home() {
           <div>
             <div className="flex items-center justify-between gap-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                {roundResult ? 'Round complete' : revealed ? 'Score this round' : 'Current turn'}
+                {roundResult
+                  ? 'Round complete'
+                  : round.kind === 'choice' && selectedOption !== null
+                    ? choiceIsCorrect
+                      ? 'Correct answer'
+                      : 'Incorrect answer'
+                    : revealed
+                      ? 'Score this round'
+                      : 'Current turn'}
               </p>
               {history.length > 0 && (
                 <Button
@@ -444,6 +525,14 @@ export default function Home() {
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               {roundResult
                 ? 'The result is locked in. Move on when everyone is ready.'
+                : round.kind === 'choice' && selectedOption === null
+                  ? `Select the option Team ${activeTeam} chose${passed ? ' for 10 points' : ' for 20 points'}.`
+                  : round.kind === 'choice' && choiceIsCorrect
+                    ? `That is correct. Award Team ${activeTeam} ${availablePoints} points.`
+                    : round.kind === 'choice' && choiceIsCorrect === false
+                      ? passed
+                        ? `Team ${activeTeam} also answered incorrectly. Reveal the answer and end the round.`
+                        : `Team ${activeTeam} answered incorrectly. Pass to Team ${otherTeam(activeTeam)} for 10 points.`
                 : passed
                   ? `The question has passed to Team ${activeTeam} for 10 points.`
                   : `Team ${starter} gets the first attempt for 20 points.`}
@@ -453,7 +542,7 @@ export default function Home() {
           <div className="my-1 h-px bg-white/10" />
 
           <div className="mt-auto space-y-3">
-            {!revealed && !roundResult && (
+            {round.kind === 'image' && !revealed && !roundResult && (
               <>
                 <Button
                   className="h-14 w-full rounded-2xl text-base font-black shadow-[0_12px_30px_rgba(255,82,112,.2)]"
@@ -465,7 +554,7 @@ export default function Home() {
                 {!passed && (
                   <Button
                     className="h-12 w-full rounded-2xl font-bold"
-                    onClick={() => setPassed(true)}
+                    onClick={passQuestion}
                     size="lg"
                     variant="secondary"
                   >
@@ -475,7 +564,7 @@ export default function Home() {
               </>
             )}
 
-            {revealed && !roundResult && (
+            {round.kind === 'image' && revealed && !roundResult && (
               <>
                 <Button
                   className={`h-14 w-full rounded-2xl text-base font-black ${
@@ -505,6 +594,70 @@ export default function Home() {
                 </Button>
               </>
             )}
+
+            {round.kind === 'choice' && !roundResult && selectedOption === null && (
+              <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4 text-sm leading-relaxed text-muted-foreground">
+                Click the answer option the team selected. The app will check it and show the next host action here.
+              </div>
+            )}
+
+            {round.kind === 'choice' &&
+              !roundResult &&
+              selectedOption !== null &&
+              choiceIsCorrect && (
+                <>
+                  <Button
+                    className={`h-14 w-full rounded-2xl text-base font-black ${
+                      activeTeam === 'A'
+                        ? 'bg-team-a text-[#04211c] hover:bg-team-a/85'
+                        : 'bg-team-b text-[#251701] hover:bg-team-b/85'
+                    }`}
+                    onClick={() => recordResult(availablePoints)}
+                    size="lg"
+                  >
+                    <Check aria-hidden="true" /> Team {activeTeam} +{availablePoints}
+                  </Button>
+                  <Button
+                    className="w-full text-muted-foreground"
+                    onClick={clearChoice}
+                    variant="ghost"
+                  >
+                    Change selected option
+                  </Button>
+                </>
+              )}
+
+            {round.kind === 'choice' &&
+              !roundResult &&
+              selectedOption !== null &&
+              choiceIsCorrect === false && (
+                <>
+                  {!passed && (
+                    <Button
+                      className="h-14 w-full rounded-2xl text-base font-black"
+                      onClick={passQuestion}
+                      size="lg"
+                    >
+                      <ArrowRightLeft aria-hidden="true" /> Pass to Team {otherTeam(activeTeam)} · 10 pts
+                    </Button>
+                  )}
+                  <Button
+                    className="h-11 w-full rounded-2xl font-bold"
+                    onClick={finishWithoutPoints}
+                    size="lg"
+                    variant="outline"
+                  >
+                    <Eye aria-hidden="true" /> Reveal answer · No points
+                  </Button>
+                  <Button
+                    className="w-full text-muted-foreground"
+                    onClick={clearChoice}
+                    variant="ghost"
+                  >
+                    Change selected option
+                  </Button>
+                </>
+              )}
 
             {roundResult && roundIndex < totalRounds - 1 && (
               <Button

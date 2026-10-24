@@ -229,6 +229,18 @@
   transition: opacity 180ms ease, border-color 180ms ease, background-color 180ms ease;
 }
 
+.trivia-option:not(:disabled):hover {
+  border-color: rgb(246 183 60 / 55%);
+  background: rgb(246 183 60 / 9%);
+}
+
+.trivia-option:not(:disabled):focus-visible {
+  outline: 3px solid rgb(255 141 160 / 55%);
+  outline-offset: 2px;
+}
+
+.trivia-option:disabled { cursor: default; }
+
 .trivia-letter {
   display: grid;
   aspect-ratio: 1;
@@ -252,6 +264,18 @@
 .trivia-option-correct .trivia-letter {
   background: var(--team-a);
   color: #041512;
+}
+
+.trivia-option-incorrect {
+  border-color: rgb(255 82 111 / 72%);
+  background: rgb(255 82 111 / 14%);
+  color: #ffe8ec;
+  box-shadow: 0 0 0 1px rgb(255 82 111 / 12%), 0 10px 28px rgb(100 14 31 / 18%);
+}
+
+.trivia-option-incorrect .trivia-letter {
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .trivia-option-muted { opacity: .4; }
