@@ -158,12 +158,6 @@ const priceRounds: PriceRound[] = [
   },
   {
     kind: 'price',
-    question: 'Guess the price of the hot dog and drink combo.',
-    price: 1.5,
-    image: '/game3/02.jpg',
-  },
-  {
-    kind: 'price',
     question: 'Guess the price of a Costco sundae.',
     price: 2.49,
     image: '/game3/03.jpg',
@@ -173,12 +167,6 @@ const priceRounds: PriceRound[] = [
     question: 'Guess the price of a Costco rotisserie chicken.',
     price: 4.99,
     image: '/game3/05.jpg',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of an 18-pack of Celsius Energy Drinks.',
-    price: 28.99,
-    image: '/game3/06.jpg',
   },
   {
     kind: 'price',
@@ -257,18 +245,6 @@ const priceRounds: PriceRound[] = [
     question: 'Guess the price of a 10-piece Pyrex food storage set.',
     price: 49.99,
     image: '/game3/20.webp',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of a pair of Nintendo Switch Joy-Cons.',
-    price: 64.99,
-    image: '/game3/22.jpg',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of a Pendleton plush throw blanket.',
-    price: 16.99,
-    image: '/game3/23.jpg',
   },
   {
     kind: 'price',
