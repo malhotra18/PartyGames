@@ -28,7 +28,7 @@ const movieRounds: ImageRound[] = Array.from({ length: 15 }, (_, index) => {
     kind: 'image',
     questionImage:
       questionPage === 13
-        ? '/game1/page-13-dangal.jpg'
+        ? '/game1/page-13-dangal-v2.jpg'
         : `/game1/page-${String(questionPage).padStart(2, '0')}.jpg`,
     answerImage: `/game1/page-${String(questionPage + 1).padStart(2, '0')}.jpg`,
   };
