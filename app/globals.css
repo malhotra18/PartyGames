@@ -1,0 +1,149 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-team-a: var(--team-a);
+  --color-team-b: var(--team-b);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) * .6);
+  --radius-md: calc(var(--radius) * .8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  --background: #0d0f19;
+  --foreground: #f9f7f2;
+  --card: #171a2a;
+  --card-foreground: #f9f7f2;
+  --popover: #202337;
+  --popover-foreground: #f9f7f2;
+  --primary: #ff526f;
+  --primary-foreground: #19050a;
+  --secondary: #252940;
+  --secondary-foreground: #f9f7f2;
+  --muted: #252940;
+  --muted-foreground: #a5a8ba;
+  --accent: #f6b73c;
+  --accent-foreground: #1c1200;
+  --destructive: #ff526f;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: #ff8da0;
+  --team-a: #43d8c0;
+  --team-b: #f6b73c;
+  --radius: .85rem;
+}
+
+.dark {
+  --background: #0d0f19;
+  --foreground: #f9f7f2;
+  --card: #171a2a;
+  --card-foreground: #f9f7f2;
+  --primary: #ff526f;
+  --primary-foreground: #19050a;
+  --secondary: #252940;
+  --secondary-foreground: #f9f7f2;
+  --muted: #252940;
+  --muted-foreground: #a5a8ba;
+  --accent: #f6b73c;
+  --accent-foreground: #1c1200;
+  --destructive: #ff526f;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: #ff8da0;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { @apply bg-background font-sans; }
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 12% -10%, rgb(255 82 111 / 12%), transparent 26rem),
+      radial-gradient(circle at 90% 12%, rgb(67 216 192 / 8%), transparent 30rem);
+    background-attachment: fixed;
+  }
+  button, select { @apply cursor-pointer; }
+}
+
+.score-chip {
+  display: grid;
+  min-width: 84px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .75rem;
+  border: 1px solid var(--border);
+  border-radius: .8rem;
+  padding: .45rem .65rem;
+  background: color-mix(in srgb, var(--card), transparent 12%);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.score-chip strong { font-size: 1.5rem; line-height: 1; }
+.score-chip-a strong { color: var(--team-a); }
+.score-chip-b strong { color: var(--team-b); }
+
+.host-panel {
+  display: flex;
+  min-height: 360px;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  padding: 1.25rem;
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 38%),
+    var(--card);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 26%);
+}
+
+.round-strip {
+  display: grid;
+  grid-template-columns: repeat(15, minmax(2rem, 1fr));
+  gap: .45rem;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: .65rem;
+  background: rgb(23 26 42 / 72%);
+  scrollbar-width: thin;
+}
+
+.round-strip > button { justify-self: center; }
+
+@media (max-width: 760px) {
+  .score-chip {
+    min-width: 72px;
+    gap: .45rem;
+    padding: .4rem .5rem;
+    font-size: .62rem;
+  }
+  .score-chip strong { font-size: 1.25rem; }
+  .round-strip { grid-template-columns: repeat(15, 2rem); }
+}
