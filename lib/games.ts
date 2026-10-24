@@ -170,12 +170,6 @@ const priceRounds: PriceRound[] = [
   },
   {
     kind: 'price',
-    question: 'Guess the price of a Costco chicken bake.',
-    price: 3.99,
-    image: '/game3/04.jpg',
-  },
-  {
-    kind: 'price',
     question: 'Guess the price of a Costco rotisserie chicken.',
     price: 4.99,
     image: '/game3/05.jpg',
@@ -203,12 +197,6 @@ const priceRounds: PriceRound[] = [
     question: 'Guess the price of a 12-pack of Monster Energy.',
     price: 36.99,
     image: '/game3/09.jpg',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of a 7 lb bacon-wrapped turducken roast with Italian sausage stuffing.',
-    price: 109.99,
-    image: '/game3/10.jpg',
   },
   {
     kind: 'price',
@@ -269,12 +257,6 @@ const priceRounds: PriceRound[] = [
     question: 'Guess the price of a 10-piece Pyrex food storage set.',
     price: 49.99,
     image: '/game3/20.webp',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of a 20-inch Squishmallow.',
-    price: 32.99,
-    image: '/game3/21.jpg',
   },
   {
     kind: 'price',
