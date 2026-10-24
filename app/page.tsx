@@ -31,6 +31,10 @@ type GameProgress = {
 const STORAGE_KEY = 'picture-play-games-v2';
 const LEGACY_STORAGE_KEY = 'picture-play-game-1';
 const gameIds: GameId[] = ['game-1', 'game-2'];
+const contentVersions: Record<GameId, number> = {
+  'game-1': 1,
+  'game-2': 2,
+};
 
 function blankProgress(gameId: GameId): GameProgress {
   return {
@@ -150,6 +154,7 @@ export default function Home() {
         const parsed = JSON.parse(saved) as {
           selectedGame?: GameId;
           progress?: Partial<Record<GameId, GameProgress>>;
+          contentVersions?: Partial<Record<GameId, number>>;
         };
         setProgress((current) => {
           const restored = { ...current };
@@ -158,7 +163,9 @@ export default function Home() {
             if (
               candidate &&
               Array.isArray(candidate.results) &&
-              candidate.results.length === games[gameId].rounds.length
+              candidate.results.length === games[gameId].rounds.length &&
+              (gameId === 'game-1' ||
+                parsed.contentVersions?.[gameId] === contentVersions[gameId])
             ) {
               restored[gameId] = candidate;
             }
@@ -197,7 +204,7 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ selectedGame, progress }),
+      JSON.stringify({ contentVersions, selectedGame, progress }),
     );
   }, [hydrated, progress, selectedGame]);
 

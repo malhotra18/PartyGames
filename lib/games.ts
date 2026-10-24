@@ -44,13 +44,6 @@ const foodRounds: ChoiceRound[] = [
   },
   {
     kind: 'choice',
-    question: 'Rasgulla is especially famous in which state?',
-    options: ['Odisha', 'West Bengal', 'Assam', 'Bihar'],
-    correctIndex: 1,
-    image: '/game2/02.jpg',
-  },
-  {
-    kind: 'choice',
     question: 'Vada pav is a signature street food of which state?',
     options: ['Maharashtra', 'Gujarat', 'Rajasthan', 'Uttar Pradesh'],
     correctIndex: 0,
@@ -79,7 +72,7 @@ const foodRounds: ChoiceRound[] = [
   },
   {
     kind: 'choice',
-    question: 'Hyderabadi-style biryani points to which state?',
+    question: 'Biryani is associated with which state?',
     options: ['Punjab', 'Uttar Pradesh', 'Telangana', 'Tamil Nadu'],
     correctIndex: 2,
     image: '/game2/07.jpg',
@@ -139,6 +132,13 @@ const foodRounds: ChoiceRound[] = [
     options: ['Maharashtra', 'Gujarat', 'Rajasthan', 'Punjab'],
     correctIndex: 1,
     image: '/game2/15.jpg',
+  },
+  {
+    kind: 'choice',
+    question: 'Rasgulla is especially famous in which state?',
+    options: ['Odisha', 'West Bengal', 'Assam', 'Bihar'],
+    correctIndex: 0,
+    image: '/game2/02.jpg',
   },
 ];
 
