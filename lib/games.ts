@@ -158,15 +158,15 @@ const priceRounds: PriceRound[] = [
   },
   {
     kind: 'price',
-    question: 'Guess the price of a Costco sundae.',
-    price: 2.49,
-    image: '/game3/03.jpg',
-  },
-  {
-    kind: 'price',
     question: 'Guess the price of a Costco rotisserie chicken.',
     price: 4.99,
     image: '/game3/05.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of an 18-pack of Celsius Energy Drinks.',
+    price: 28.99,
+    image: '/game3/06.jpg',
   },
   {
     kind: 'price',
@@ -179,12 +179,6 @@ const priceRounds: PriceRound[] = [
     question: 'Guess the price of a 36-count Z-Bar variety pack.',
     price: 26.99,
     image: '/game3/08.jpg',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of a 12-pack of Monster Energy.',
-    price: 36.99,
-    image: '/game3/09.jpg',
   },
   {
     kind: 'price',
@@ -233,12 +227,6 @@ const priceRounds: PriceRound[] = [
     question: 'Guess the price of 300 Dixie paper plates.',
     price: 18.99,
     image: '/game3/18.jpg',
-  },
-  {
-    kind: 'price',
-    question: 'Guess the price of 500 Solo plastic forks.',
-    price: 14.99,
-    image: '/game3/19.jpg',
   },
   {
     kind: 'price',
