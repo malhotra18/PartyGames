@@ -12,8 +12,15 @@ export type ChoiceRound = {
   image: string;
 };
 
-export type GameRound = ImageRound | ChoiceRound;
-export type GameId = 'game-1' | 'game-2';
+export type PriceRound = {
+  kind: 'price';
+  question: string;
+  price: number;
+  image: string;
+};
+
+export type GameRound = ImageRound | ChoiceRound | PriceRound;
+export type GameId = 'game-1' | 'game-2' | 'game-3';
 
 export type GameDefinition = {
   id: GameId;
@@ -142,6 +149,159 @@ const foodRounds: ChoiceRound[] = [
   },
 ];
 
+const priceRounds: PriceRound[] = [
+  {
+    kind: 'price',
+    question: 'Guess the price of a Costco cheese pizza.',
+    price: 9.95,
+    image: '/game3/01.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of the hot dog and drink combo.',
+    price: 1.5,
+    image: '/game3/02.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a Costco sundae.',
+    price: 2.49,
+    image: '/game3/03.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a Costco chicken bake.',
+    price: 3.99,
+    image: '/game3/04.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a Costco rotisserie chicken.',
+    price: 4.99,
+    image: '/game3/05.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of an 18-pack of Celsius Energy Drinks.',
+    price: 28.99,
+    image: '/game3/06.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of the El Cerro 17-month whole boneless Serrano ham.',
+    price: 169.99,
+    image: '/game3/07.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 36-count Z-Bar variety pack.',
+    price: 26.99,
+    image: '/game3/08.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 12-pack of Monster Energy.',
+    price: 36.99,
+    image: '/game3/09.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 7 lb bacon-wrapped turducken roast with Italian sausage stuffing.',
+    price: 109.99,
+    image: '/game3/10.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of “The President Casket.”',
+    price: 1149.99,
+    image: '/game3/11.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 12-pack of Bounty Advanced paper towels.',
+    price: 29.99,
+    image: '/game3/12.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of 152-count Kirkland Ultra Clean laundry detergent.',
+    price: 22.99,
+    image: '/game3/13.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of 200 Kirkland 13-gallon trash bags.',
+    price: 19.99,
+    image: '/game3/14.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 48-count pack of Kirkland AAA batteries.',
+    price: 13.99,
+    image: '/game3/15.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 3-pack of Crest Pro-Health Advanced mouthwash.',
+    price: 12.99,
+    image: '/game3/16.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of Kirkland Organic Multivitamins.',
+    price: 18.49,
+    image: '/game3/17.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of 300 Dixie paper plates.',
+    price: 18.99,
+    image: '/game3/18.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of 500 Solo plastic forks.',
+    price: 14.99,
+    image: '/game3/19.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 10-piece Pyrex food storage set.',
+    price: 49.99,
+    image: '/game3/20.webp',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a 20-inch Squishmallow.',
+    price: 32.99,
+    image: '/game3/21.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a pair of Nintendo Switch Joy-Cons.',
+    price: 64.99,
+    image: '/game3/22.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of a Pendleton plush throw blanket.',
+    price: 16.99,
+    image: '/game3/23.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of this full-size Goliath barn.',
+    price: 13499.99,
+    image: '/game3/24.jpg',
+  },
+  {
+    kind: 'price',
+    question: 'Guess the price of this 4-person barrel sauna.',
+    price: 3999.99,
+    image: '/game3/25.jpg',
+  },
+];
+
 export const games: Record<GameId, GameDefinition> = {
   'game-1': {
     id: 'game-1',
@@ -154,5 +314,11 @@ export const games: Record<GameId, GameDefinition> = {
     title: 'Taste of India',
     shortTitle: 'Game 2',
     rounds: foodRounds,
+  },
+  'game-3': {
+    id: 'game-3',
+    title: 'Name the Price',
+    shortTitle: 'Game 3',
+    rounds: priceRounds,
   },
 };

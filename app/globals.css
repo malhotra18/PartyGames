@@ -287,6 +287,151 @@
   font-weight: 700;
 }
 
+.price-stage {
+  display: grid;
+  height: 100%;
+  grid-template-columns: minmax(220px, 42%) minmax(0, 1fr);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 8%, rgb(255 82 111 / 13%), transparent 17rem),
+    #111422;
+}
+
+.price-product {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(1rem, 2.4vw, 2rem);
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 92%), rgb(239 235 226 / 96%)),
+    #f5f1e8;
+}
+
+.price-product img {
+  max-height: 82%;
+  max-width: 92%;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 24px rgb(18 19 28 / 20%));
+}
+
+.price-product > span {
+  position: absolute;
+  bottom: 1rem;
+  left: 1.15rem;
+  color: #6e2030;
+  font-size: .66rem;
+  font-weight: 950;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.price-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(1.15rem, 2.8vw, 2.7rem);
+}
+
+.price-copy h2 {
+  margin-top: clamp(.4rem, .8vw, .75rem);
+  max-width: 29ch;
+  font-size: clamp(1.35rem, 2.45vw, 2.35rem);
+  font-weight: 950;
+  letter-spacing: -.04em;
+  line-height: 1.08;
+}
+
+.price-hint {
+  margin-top: clamp(.8rem, 1.5vw, 1.25rem);
+  max-width: 38ch;
+  color: var(--muted-foreground);
+  font-size: clamp(.7rem, 1.05vw, .92rem);
+  line-height: 1.55;
+}
+
+.price-reveal {
+  margin-top: clamp(.7rem, 1.6vw, 1.25rem);
+  color: var(--accent);
+  font-size: clamp(2.2rem, 5vw, 4.75rem);
+  font-weight: 950;
+  letter-spacing: -.06em;
+  line-height: .95;
+  text-shadow: 0 10px 35px rgb(246 183 60 / 18%);
+}
+
+.price-result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: clamp(.65rem, 1.3vw, 1rem);
+}
+
+.price-result-grid > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .08rem;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: .75rem;
+  padding: clamp(.45rem, 1vw, .7rem);
+  background: rgb(255 255 255 / 3%);
+}
+
+.price-result-grid span,
+.price-result-grid small {
+  color: var(--muted-foreground);
+  font-size: clamp(.5rem, .75vw, .65rem);
+  font-weight: 800;
+}
+
+.price-result-grid strong {
+  font-size: clamp(.78rem, 1.3vw, 1.1rem);
+  font-weight: 900;
+}
+
+.price-result-grid > .price-result-winner {
+  border-color: rgb(67 216 192 / 55%);
+  background: rgb(67 216 192 / 12%);
+  box-shadow: 0 8px 24px rgb(12 89 78 / 15%);
+}
+
+.price-result-winner strong { color: var(--team-a); }
+
+.price-guess-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .45rem;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.price-guess-field > div { position: relative; }
+
+.price-guess-field svg {
+  position: absolute;
+  top: 50%;
+  left: .65rem;
+  z-index: 1;
+  width: 1rem;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+}
+
+.price-guess-field input {
+  height: 3rem;
+  border-radius: .85rem;
+  padding-left: 1.8rem;
+  font-size: .95rem;
+  font-weight: 850;
+}
+
 @media (max-width: 760px) {
   .score-chip {
     min-width: 72px;
@@ -310,4 +455,13 @@
   }
   .trivia-letter { width: 1.2rem; border-radius: .38rem; }
   .trivia-answer { margin-top: .35rem; font-size: .55rem; }
+  .price-stage { grid-template-columns: 36% minmax(0, 1fr); }
+  .price-product { padding: .6rem; }
+  .price-product > span { bottom: .55rem; left: .6rem; font-size: .46rem; }
+  .price-copy { padding: .75rem; }
+  .price-copy h2 { font-size: clamp(.9rem, 3.5vw, 1.35rem); }
+  .price-hint { margin-top: .45rem; font-size: .56rem; line-height: 1.35; }
+  .price-reveal { margin-top: .45rem; font-size: clamp(1.6rem, 7vw, 2.4rem); }
+  .price-result-grid { gap: .3rem; margin-top: .4rem; }
+  .price-result-grid > div { border-radius: .5rem; padding: .3rem; }
 }

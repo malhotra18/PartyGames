@@ -5,6 +5,7 @@ import {
   ArrowRightLeft,
   Check,
   CircleX,
+  DollarSign,
   Eye,
   Film,
   Fullscreen,
@@ -14,14 +15,26 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   NativeSelect,
   NativeSelectOption,
 } from '@/components/ui/native-select';
-import { games, type ChoiceRound, type GameId } from '@/lib/games';
+import {
+  games,
+  type ChoiceRound,
+  type GameId,
+  type PriceRound,
+} from '@/lib/games';
 
 type Team = 'A' | 'B';
-type RoundResult = { team: Team | null; points: number };
+type RoundWinner = Team | 'both' | null;
+type PriceGuesses = { A: string; B: string };
+type RoundResult = {
+  team: RoundWinner;
+  points: number;
+  guesses?: { A: number; B: number };
+};
 type GameProgress = {
   roundIndex: number;
   results: Array<RoundResult | null>;
@@ -30,10 +43,11 @@ type GameProgress = {
 
 const STORAGE_KEY = 'picture-play-games-v2';
 const LEGACY_STORAGE_KEY = 'picture-play-game-1';
-const gameIds: GameId[] = ['game-1', 'game-2'];
+const gameIds: GameId[] = ['game-1', 'game-2', 'game-3'];
 const contentVersions: Record<GameId, number> = {
   'game-1': 1,
   'game-2': 2,
+  'game-3': 1,
 };
 
 function blankProgress(gameId: GameId): GameProgress {
@@ -48,11 +62,20 @@ function initialProgress(): Record<GameId, GameProgress> {
   return {
     'game-1': blankProgress('game-1'),
     'game-2': blankProgress('game-2'),
+    'game-3': blankProgress('game-3'),
   };
 }
 
 function otherTeam(team: Team): Team {
   return team === 'A' ? 'B' : 'A';
+}
+
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  }).format(value);
 }
 
 function ChoiceSlide({
@@ -138,6 +161,56 @@ function ChoiceSlide({
   );
 }
 
+function PriceSlide({
+  result,
+  revealed,
+  round,
+}: {
+  result: RoundResult | null;
+  revealed: boolean;
+  round: PriceRound;
+}) {
+  const guesses = result?.guesses;
+
+  return (
+    <div className="price-stage">
+      <div className="price-product">
+        <img alt="Costco product to price" src={round.image} />
+        <span>Name the Price</span>
+      </div>
+      <div className="price-copy">
+        <p className="trivia-kicker">
+          {revealed ? 'Actual Costco price' : 'Closest guess wins 1 point'}
+        </p>
+        <h2>{round.question}</h2>
+        {revealed ? (
+          <>
+            <p aria-live="polite" className="price-reveal">
+              {formatMoney(round.price)}
+            </p>
+            {guesses && (
+              <div className="price-result-grid">
+                <div className={result?.team === 'A' || result?.team === 'both' ? 'price-result-winner' : ''}>
+                  <span>Team A</span>
+                  <strong>{formatMoney(guesses.A)}</strong>
+                  <small>Off by {formatMoney(Math.abs(guesses.A - round.price))}</small>
+                </div>
+                <div className={result?.team === 'B' || result?.team === 'both' ? 'price-result-winner' : ''}>
+                  <span>Team B</span>
+                  <strong>{formatMoney(guesses.B)}</strong>
+                  <small>Off by {formatMoney(Math.abs(guesses.B - round.price))}</small>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="price-hint">Both teams make one price guess. The closest answer takes the round.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedGame, setSelectedGame] = useState<GameId>('game-1');
   const [progress, setProgress] =
@@ -145,6 +218,7 @@ export default function Home() {
   const [revealed, setRevealed] = useState(false);
   const [passed, setPassed] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [priceGuesses, setPriceGuesses] = useState<PriceGuesses>({ A: '', B: '' });
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -223,12 +297,28 @@ export default function Home() {
     round.kind === 'choice' && selectedOption !== null
       ? selectedOption === round.correctIndex
       : null;
+  const parsedPriceGuesses = {
+    A: Number(priceGuesses.A),
+    B: Number(priceGuesses.B),
+  };
+  const hasBothPriceGuesses =
+    priceGuesses.A.trim() !== '' &&
+    priceGuesses.B.trim() !== '' &&
+    Number.isFinite(parsedPriceGuesses.A) &&
+    Number.isFinite(parsedPriceGuesses.B) &&
+    parsedPriceGuesses.A >= 0 &&
+    parsedPriceGuesses.B >= 0;
 
   const scores = useMemo(
     () =>
       results.reduce<{ A: number; B: number }>(
         (total, result) => {
-          if (result?.team) total[result.team] += result.points;
+          if (result?.team === 'both') {
+            total.A += result.points;
+            total.B += result.points;
+          } else if (result?.team) {
+            total[result.team] += result.points;
+          }
           return total;
         },
         { A: 0, B: 0 },
@@ -250,6 +340,7 @@ export default function Home() {
     setRevealed(false);
     setPassed(false);
     setSelectedOption(null);
+    setPriceGuesses({ A: '', B: '' });
   }
 
   function goToRound(nextRound: number) {
@@ -261,6 +352,7 @@ export default function Home() {
     setRevealed(false);
     setPassed(false);
     setSelectedOption(null);
+    setPriceGuesses({ A: '', B: '' });
   }
 
   function selectChoice(index: number) {
@@ -307,9 +399,36 @@ export default function Home() {
     }));
   }
 
+  function revealPrice() {
+    if (round.kind !== 'price' || roundResult || !hasBothPriceGuesses) return;
+    const differenceA = Math.abs(parsedPriceGuesses.A - round.price);
+    const differenceB = Math.abs(parsedPriceGuesses.B - round.price);
+    const winner: RoundWinner =
+      differenceA === differenceB
+        ? 'both'
+        : differenceA < differenceB
+          ? 'A'
+          : 'B';
+    const result: RoundResult = {
+      team: winner,
+      points: 1,
+      guesses: parsedPriceGuesses,
+    };
+    updateCurrentProgress((current) => ({
+      ...current,
+      results: current.results.map((item, index) =>
+        index === roundIndex ? result : item,
+      ),
+      history: [...current.history, roundIndex],
+    }));
+    setRevealed(true);
+  }
+
   function undoLastResult() {
     const lastRound = history.at(-1);
     if (lastRound === undefined) return;
+    const undoneRound = game.rounds[lastRound];
+    const undoneResult = results[lastRound];
     updateCurrentProgress((current) => ({
       roundIndex: lastRound,
       results: current.results.map((item, index) =>
@@ -319,7 +438,15 @@ export default function Home() {
     }));
     setPassed(false);
     setSelectedOption(null);
-    setRevealed(game.rounds[lastRound]?.kind === 'image');
+    setPriceGuesses(
+      undoneRound?.kind === 'price' && undoneResult?.guesses
+        ? {
+            A: String(undoneResult.guesses.A),
+            B: String(undoneResult.guesses.B),
+          }
+        : { A: '', B: '' },
+    );
+    setRevealed(undoneRound?.kind === 'image');
   }
 
   function resetGame() {
@@ -336,6 +463,7 @@ export default function Home() {
     setRevealed(false);
     setPassed(false);
     setSelectedOption(null);
+    setPriceGuesses({ A: '', B: '' });
   }
 
   async function enterFullscreen() {
@@ -376,8 +504,8 @@ export default function Home() {
             <NativeSelectOption value="game-2">
               Game 2 · Taste of India
             </NativeSelectOption>
-            <NativeSelectOption disabled value="game-3">
-              Game 3 · Coming soon
+            <NativeSelectOption value="game-3">
+              Game 3 · Name the Price
             </NativeSelectOption>
             <NativeSelectOption disabled value="game-4">
               Game 4 · Coming soon
@@ -418,12 +546,16 @@ export default function Home() {
               </span>
               <span
                 className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-black sm:text-xs ${
-                  activeTeam === 'A'
+                  round.kind === 'price'
+                    ? 'bg-primary/15 text-primary'
+                    : activeTeam === 'A'
                     ? 'bg-team-a/15 text-team-a'
                     : 'bg-team-b/15 text-team-b'
                 }`}
               >
-                Team {activeTeam} · {availablePoints} pts
+                {round.kind === 'price'
+                  ? 'Closest guess · 1 pt'
+                  : `Team ${activeTeam} · ${availablePoints} pts`}
               </span>
             </div>
             <div className="relative aspect-video bg-[#0c0d16]">
@@ -437,7 +569,7 @@ export default function Home() {
                   className="h-full w-full object-contain"
                   src={revealed ? round.answerImage : round.questionImage}
                 />
-              ) : (
+              ) : round.kind === 'choice' ? (
                 <ChoiceSlide
                   disabled={Boolean(roundResult)}
                   onSelect={selectChoice}
@@ -445,11 +577,19 @@ export default function Home() {
                   round={round}
                   selectedOption={selectedOption}
                 />
+              ) : (
+                <PriceSlide
+                  result={roundResult}
+                  revealed={revealed || Boolean(roundResult)}
+                  round={round}
+                />
               )}
               <div
                 aria-hidden="true"
                 className={`pointer-events-none absolute inset-x-0 top-0 h-1 transition-colors ${
-                  revealed ? 'bg-primary' : 'bg-transparent'
+                  revealed || (round.kind === 'price' && roundResult)
+                    ? 'bg-primary'
+                    : 'bg-transparent'
                 }`}
               />
             </div>
@@ -469,7 +609,13 @@ export default function Home() {
             />
           </div>
 
-          <nav aria-label="Choose round" className="round-strip">
+          <nav
+            aria-label="Choose round"
+            className="round-strip"
+            style={{
+              gridTemplateColumns: `repeat(${totalRounds}, minmax(2rem, 1fr))`,
+            }}
+          >
             {game.rounds.map((_, index) => (
               <Button
                 aria-current={index === roundIndex ? 'step' : undefined}
@@ -498,6 +644,8 @@ export default function Home() {
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                 {roundResult
                   ? 'Round complete'
+                  : round.kind === 'price'
+                    ? 'Enter both guesses'
                   : round.kind === 'choice' && selectedOption !== null
                     ? choiceIsCorrect
                       ? 'Correct answer'
@@ -519,19 +667,31 @@ export default function Home() {
             </div>
 
             <h2 className="mt-2 flex items-center gap-2 text-2xl font-black">
-              <Trophy
-                aria-hidden="true"
-                className={activeTeam === 'A' ? 'text-team-a' : 'text-team-b'}
-              />
+              {round.kind === 'price' ? (
+                <DollarSign aria-hidden="true" className="text-primary" />
+              ) : (
+                <Trophy
+                  aria-hidden="true"
+                  className={activeTeam === 'A' ? 'text-team-a' : 'text-team-b'}
+                />
+              )}
               {roundResult
-                ? roundResult.team
-                  ? `Team ${roundResult.team} +${roundResult.points}`
-                  : 'No points'
-                : `Team ${activeTeam}`}
+                ? roundResult.team === 'both'
+                  ? `Both teams +${roundResult.points}`
+                  : roundResult.team
+                    ? `Team ${roundResult.team} +${roundResult.points}`
+                    : 'No points'
+                : round.kind === 'price'
+                  ? 'Both teams'
+                  : `Team ${activeTeam}`}
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               {roundResult
-                ? 'The result is locked in. Move on when everyone is ready.'
+                ? round.kind === 'price' && roundResult.guesses
+                  ? `${formatMoney(round.price)} was the actual price. Team A guessed ${formatMoney(roundResult.guesses.A)} and Team B guessed ${formatMoney(roundResult.guesses.B)}.`
+                  : 'The result is locked in. Move on when everyone is ready.'
+                : round.kind === 'price'
+                  ? 'Enter one price from each team. Revealing the answer automatically gives 1 point to the closest guess.'
                 : round.kind === 'choice' && selectedOption === null
                   ? `Select the option Team ${activeTeam} chose${passed ? ' for 10 points' : ' for 20 points'}.`
                   : round.kind === 'choice' && choiceIsCorrect
@@ -665,6 +825,66 @@ export default function Home() {
                   </Button>
                 </>
               )}
+
+            {round.kind === 'price' && !roundResult && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="price-guess-field">
+                    <span className="text-team-a">Team A guess</span>
+                    <div>
+                      <DollarSign aria-hidden="true" />
+                      <Input
+                        aria-label="Team A price guess"
+                        inputMode="decimal"
+                        min="0"
+                        onChange={(event) =>
+                          setPriceGuesses((current) => ({
+                            ...current,
+                            A: event.target.value,
+                          }))
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        type="number"
+                        value={priceGuesses.A}
+                      />
+                    </div>
+                  </label>
+                  <label className="price-guess-field">
+                    <span className="text-team-b">Team B guess</span>
+                    <div>
+                      <DollarSign aria-hidden="true" />
+                      <Input
+                        aria-label="Team B price guess"
+                        inputMode="decimal"
+                        min="0"
+                        onChange={(event) =>
+                          setPriceGuesses((current) => ({
+                            ...current,
+                            B: event.target.value,
+                          }))
+                        }
+                        placeholder="0.00"
+                        step="0.01"
+                        type="number"
+                        value={priceGuesses.B}
+                      />
+                    </div>
+                  </label>
+                </div>
+                <Button
+                  className="h-14 w-full rounded-2xl text-base font-black shadow-[0_12px_30px_rgba(255,82,112,.2)]"
+                  disabled={!hasBothPriceGuesses}
+                  onClick={revealPrice}
+                  size="lg"
+                >
+                  <Eye aria-hidden="true" /> Reveal price & score
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  Equal distance awards 1 point to both teams.
+                </p>
+              </>
+            )}
 
             {roundResult && roundIndex < totalRounds - 1 && (
               <Button
