@@ -18,33 +18,99 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from '@/components/ui/native-select';
+import { games, type ChoiceRound, type GameId } from '@/lib/games';
 
 type Team = 'A' | 'B';
 type RoundResult = { team: Team | null; points: number };
+type GameProgress = {
+  roundIndex: number;
+  results: Array<RoundResult | null>;
+  history: number[];
+};
 
-const TOTAL_ROUNDS = 15;
-const STORAGE_KEY = 'picture-play-game-1';
+const STORAGE_KEY = 'picture-play-games-v2';
+const LEGACY_STORAGE_KEY = 'picture-play-game-1';
+const gameIds: GameId[] = ['game-1', 'game-2'];
 
-const rounds = Array.from({ length: TOTAL_ROUNDS }, (_, index) => {
-  const questionPage = 3 + index * 2;
+function blankProgress(gameId: GameId): GameProgress {
   return {
-    question: `/game1/page-${String(questionPage).padStart(2, '0')}.jpg`,
-    answer: `/game1/page-${String(questionPage + 1).padStart(2, '0')}.jpg`,
+    roundIndex: 0,
+    results: Array(games[gameId].rounds.length).fill(null),
+    history: [],
   };
-});
+}
+
+function initialProgress(): Record<GameId, GameProgress> {
+  return {
+    'game-1': blankProgress('game-1'),
+    'game-2': blankProgress('game-2'),
+  };
+}
 
 function otherTeam(team: Team): Team {
   return team === 'A' ? 'B' : 'A';
 }
 
+function ChoiceSlide({
+  round,
+  revealed,
+}: {
+  round: ChoiceRound;
+  revealed: boolean;
+}) {
+  return (
+    <div className="trivia-stage">
+      <div className="trivia-photo">
+        <img alt="Featured Indian dish" src={round.image} />
+        <div className="trivia-photo-shade" />
+        <span>Taste of India</span>
+      </div>
+      <div className="trivia-copy">
+        <p className="trivia-kicker">
+          {revealed ? 'Answer revealed' : 'Choose the state'}
+        </p>
+        <h2>{round.question}</h2>
+        <div className="trivia-options">
+          {round.options.map((option, index) => {
+            const isCorrect = index === round.correctIndex;
+            return (
+              <div
+                className={`trivia-option ${
+                  revealed
+                    ? isCorrect
+                      ? 'trivia-option-correct'
+                      : 'trivia-option-muted'
+                    : ''
+                }`}
+                key={option}
+              >
+                <span className="trivia-letter">
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <span>{option}</span>
+                {revealed && isCorrect && (
+                  <Check aria-hidden="true" className="ml-auto size-5" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {revealed && (
+          <p aria-live="polite" className="trivia-answer">
+            Correct answer: <strong>{round.options[round.correctIndex]}</strong>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
-  const [roundIndex, setRoundIndex] = useState(0);
+  const [selectedGame, setSelectedGame] = useState<GameId>('game-1');
+  const [progress, setProgress] =
+    useState<Record<GameId, GameProgress>>(initialProgress);
   const [revealed, setRevealed] = useState(false);
   const [passed, setPassed] = useState(false);
-  const [results, setResults] = useState<Array<RoundResult | null>>(
-    () => Array(TOTAL_ROUNDS).fill(null),
-  );
-  const [history, setHistory] = useState<number[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -52,23 +118,43 @@ export default function Home() {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as {
-          roundIndex?: number;
-          results?: Array<RoundResult | null>;
-          history?: number[];
+          selectedGame?: GameId;
+          progress?: Partial<Record<GameId, GameProgress>>;
         };
-        if (
-          Array.isArray(parsed.results) &&
-          parsed.results.length === TOTAL_ROUNDS
-        ) {
-          setResults(parsed.results);
+        setProgress((current) => {
+          const restored = { ...current };
+          for (const gameId of gameIds) {
+            const candidate = parsed.progress?.[gameId];
+            if (
+              candidate &&
+              Array.isArray(candidate.results) &&
+              candidate.results.length === games[gameId].rounds.length
+            ) {
+              restored[gameId] = candidate;
+            }
+          }
+          return restored;
+        });
+        if (parsed.selectedGame && gameIds.includes(parsed.selectedGame)) {
+          setSelectedGame(parsed.selectedGame);
         }
-        if (Array.isArray(parsed.history)) setHistory(parsed.history);
-        if (
-          Number.isInteger(parsed.roundIndex) &&
-          parsed.roundIndex! >= 0 &&
-          parsed.roundIndex! < TOTAL_ROUNDS
-        ) {
-          setRoundIndex(parsed.roundIndex!);
+      } else {
+        const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          const parsed = JSON.parse(legacy) as Partial<GameProgress>;
+          if (
+            Array.isArray(parsed.results) &&
+            parsed.results.length === games['game-1'].rounds.length
+          ) {
+            setProgress((current) => ({
+              ...current,
+              'game-1': {
+                roundIndex: parsed.roundIndex ?? 0,
+                results: parsed.results!,
+                history: parsed.history ?? [],
+              },
+            }));
+          }
         }
       }
     } catch {
@@ -81,13 +167,25 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ roundIndex, results, history }),
+      JSON.stringify({ selectedGame, progress }),
     );
-  }, [history, hydrated, results, roundIndex]);
+  }, [hydrated, progress, selectedGame]);
+
+  const game = games[selectedGame];
+  const currentProgress = progress[selectedGame];
+  const { roundIndex, results, history } = currentProgress;
+  const round = game.rounds[roundIndex];
+  const totalRounds = game.rounds.length;
+  const roundResult = results[roundIndex];
+  const completedCount = results.filter(Boolean).length;
+  const gameComplete = completedCount === totalRounds;
+  const starter: Team = roundIndex % 2 === 0 ? 'A' : 'B';
+  const activeTeam = passed ? otherTeam(starter) : starter;
+  const availablePoints = passed ? 10 : 20;
 
   const scores = useMemo(
     () =>
-      results.reduce(
+      results.reduce<{ A: number; B: number }>(
         (total, result) => {
           if (result?.team) total[result.team] += result.points;
           return total;
@@ -97,16 +195,27 @@ export default function Home() {
     [results],
   );
 
-  const starter: Team = roundIndex % 2 === 0 ? 'A' : 'B';
-  const activeTeam = passed ? otherTeam(starter) : starter;
-  const availablePoints = passed ? 10 : 20;
-  const round = rounds[roundIndex];
-  const roundResult = results[roundIndex];
-  const completedCount = results.filter(Boolean).length;
-  const gameComplete = completedCount === TOTAL_ROUNDS;
+  function updateCurrentProgress(
+    update: (current: GameProgress) => GameProgress,
+  ) {
+    setProgress((current) => ({
+      ...current,
+      [selectedGame]: update(current[selectedGame]),
+    }));
+  }
+
+  function selectGame(gameId: GameId) {
+    setSelectedGame(gameId);
+    setRevealed(false);
+    setPassed(false);
+  }
 
   function goToRound(nextRound: number) {
-    setRoundIndex(Math.max(0, Math.min(TOTAL_ROUNDS - 1, nextRound)));
+    const safeRound = Math.max(0, Math.min(totalRounds - 1, nextRound));
+    updateCurrentProgress((current) => ({
+      ...current,
+      roundIndex: safeRound,
+    }));
     setRevealed(false);
     setPassed(false);
   }
@@ -117,20 +226,25 @@ export default function Home() {
       team: points > 0 ? activeTeam : null,
       points,
     };
-    setResults((current) =>
-      current.map((item, index) => (index === roundIndex ? result : item)),
-    );
-    setHistory((current) => [...current, roundIndex]);
+    updateCurrentProgress((current) => ({
+      ...current,
+      results: current.results.map((item, index) =>
+        index === roundIndex ? result : item,
+      ),
+      history: [...current.history, roundIndex],
+    }));
   }
 
   function undoLastResult() {
     const lastRound = history.at(-1);
     if (lastRound === undefined) return;
-    setResults((current) =>
-      current.map((item, index) => (index === lastRound ? null : item)),
-    );
-    setHistory((current) => current.slice(0, -1));
-    setRoundIndex(lastRound);
+    updateCurrentProgress((current) => ({
+      roundIndex: lastRound,
+      results: current.results.map((item, index) =>
+        index === lastRound ? null : item,
+      ),
+      history: current.history.slice(0, -1),
+    }));
     setPassed(false);
     setRevealed(true);
   }
@@ -138,16 +252,16 @@ export default function Home() {
   function resetGame() {
     if (
       completedCount > 0 &&
-      !window.confirm('Reset Game 1 and clear both team scores?')
+      !window.confirm(`Reset ${game.title} and clear both team scores?`)
     ) {
       return;
     }
-    setRoundIndex(0);
+    setProgress((current) => ({
+      ...current,
+      [selectedGame]: blankProgress(selectedGame),
+    }));
     setRevealed(false);
     setPassed(false);
-    setResults(Array(TOTAL_ROUNDS).fill(null));
-    setHistory([]);
-    window.localStorage.removeItem(STORAGE_KEY);
   }
 
   async function enterFullscreen() {
@@ -179,13 +293,14 @@ export default function Home() {
           <NativeSelect
             aria-label="Choose a game"
             className="order-3 w-full sm:order-none sm:w-auto"
-            defaultValue="game-1"
+            onChange={(event) => selectGame(event.target.value as GameId)}
+            value={selectedGame}
           >
             <NativeSelectOption value="game-1">
               Game 1 · Guess the Movie
             </NativeSelectOption>
-            <NativeSelectOption disabled value="game-2">
-              Game 2 · Coming soon
+            <NativeSelectOption value="game-2">
+              Game 2 · Taste of India
             </NativeSelectOption>
             <NativeSelectOption disabled value="game-3">
               Game 3 · Coming soon
@@ -224,11 +339,11 @@ export default function Home() {
         <div className="space-y-3">
           <div className="overflow-hidden rounded-[22px] border border-white/10 bg-black shadow-[0_28px_80px_rgba(0,0,0,.38)] sm:rounded-[28px]">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-[#171929] px-4 py-3 sm:px-5">
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/55 sm:text-xs">
-                Round {roundIndex + 1} of {TOTAL_ROUNDS}
+              <span className="min-w-0 truncate text-[11px] font-bold uppercase tracking-[0.16em] text-white/55 sm:text-xs">
+                {game.shortTitle} · {game.title} · Round {roundIndex + 1}/{totalRounds}
               </span>
               <span
-                className={`rounded-full px-3 py-1 text-[11px] font-black sm:text-xs ${
+                className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-black sm:text-xs ${
                   activeTeam === 'A'
                     ? 'bg-team-a/15 text-team-a'
                     : 'bg-team-b/15 text-team-b'
@@ -238,15 +353,19 @@ export default function Home() {
               </span>
             </div>
             <div className="relative aspect-video bg-[#0c0d16]">
-              <img
-                alt={
-                  revealed
-                    ? `Movie answer for round ${roundIndex + 1}`
-                    : `Picture puzzle for round ${roundIndex + 1}`
-                }
-                className="h-full w-full object-contain"
-                src={revealed ? round.answer : round.question}
-              />
+              {round.kind === 'image' ? (
+                <img
+                  alt={
+                    revealed
+                      ? `Movie answer for round ${roundIndex + 1}`
+                      : `Picture puzzle for round ${roundIndex + 1}`
+                  }
+                  className="h-full w-full object-contain"
+                  src={revealed ? round.answerImage : round.questionImage}
+                />
+              ) : (
+                <ChoiceSlide revealed={revealed} round={round} />
+              )}
               <div
                 aria-hidden="true"
                 className={`pointer-events-none absolute inset-x-0 top-0 h-1 transition-colors ${
@@ -257,8 +376,8 @@ export default function Home() {
           </div>
 
           <div
-            aria-label={`Round ${roundIndex + 1} of ${TOTAL_ROUNDS}`}
-            aria-valuemax={TOTAL_ROUNDS}
+            aria-label={`Round ${roundIndex + 1} of ${totalRounds}`}
+            aria-valuemax={totalRounds}
             aria-valuemin={1}
             aria-valuenow={roundIndex + 1}
             className="h-1.5 overflow-hidden rounded-full bg-muted"
@@ -266,12 +385,12 @@ export default function Home() {
           >
             <div
               className="h-full rounded-full bg-primary transition-[width] duration-300"
-              style={{ width: `${((roundIndex + 1) / TOTAL_ROUNDS) * 100}%` }}
+              style={{ width: `${((roundIndex + 1) / totalRounds) * 100}%` }}
             />
           </div>
 
           <nav aria-label="Choose round" className="round-strip">
-            {rounds.map((_, index) => (
+            {game.rounds.map((_, index) => (
               <Button
                 aria-current={index === roundIndex ? 'step' : undefined}
                 aria-label={`Round ${index + 1}${results[index] ? ', completed' : ''}`}
@@ -387,7 +506,7 @@ export default function Home() {
               </>
             )}
 
-            {roundResult && roundIndex < TOTAL_ROUNDS - 1 && (
+            {roundResult && roundIndex < totalRounds - 1 && (
               <Button
                 className="h-14 w-full rounded-2xl text-base font-black"
                 onClick={() => goToRound(roundIndex + 1)}
@@ -397,7 +516,7 @@ export default function Home() {
               </Button>
             )}
 
-            {roundResult && roundIndex === TOTAL_ROUNDS - 1 && (
+            {roundResult && roundIndex === totalRounds - 1 && (
               <div className="rounded-2xl border border-team-b/25 bg-team-b/10 p-4 text-center">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-team-b">
                   {gameComplete ? 'Game complete' : 'Final round scored'}
@@ -413,7 +532,7 @@ export default function Home() {
 
           <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-4">
             <span className="text-xs text-muted-foreground">
-              {completedCount}/{TOTAL_ROUNDS} scored
+              {completedCount}/{totalRounds} scored
             </span>
             <Button onClick={resetGame} size="sm" variant="ghost">
               <RotateCcw aria-hidden="true" /> Reset game
