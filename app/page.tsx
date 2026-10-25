@@ -24,6 +24,7 @@ import {
   games,
   type ChoiceRound,
   type GameId,
+  type ImageRound,
   type PriceRound,
 } from '@/lib/games';
 
@@ -43,11 +44,12 @@ type GameProgress = {
 
 const STORAGE_KEY = 'picture-play-games-v2';
 const LEGACY_STORAGE_KEY = 'picture-play-game-1';
-const gameIds: GameId[] = ['game-1', 'game-2', 'game-3'];
+const gameIds: GameId[] = ['game-1', 'game-2', 'game-3', 'game-4'];
 const contentVersions: Record<GameId, number> = {
   'game-1': 1,
   'game-2': 2,
   'game-3': 5,
+  'game-4': 1,
 };
 
 function blankProgress(gameId: GameId): GameProgress {
@@ -63,6 +65,7 @@ function initialProgress(): Record<GameId, GameProgress> {
     'game-1': blankProgress('game-1'),
     'game-2': blankProgress('game-2'),
     'game-3': blankProgress('game-3'),
+    'game-4': blankProgress('game-4'),
   };
 }
 
@@ -76,6 +79,20 @@ function formatMoney(value: number): string {
     currency: 'USD',
     minimumFractionDigits: 2,
   }).format(value);
+}
+
+function MovieAnswerSlide({ round }: { round: ImageRound }) {
+  return (
+    <div className="movie-answer-slide">
+      <img alt="Movie clue artwork" src={round.questionImage} />
+      <div className="movie-answer-shade" />
+      <div className="movie-answer-copy">
+        <p>The answer is</p>
+        <h2>{round.answerTitle}</h2>
+        <span>Movie magic unlocked!</span>
+      </div>
+    </div>
+  );
 }
 
 function ChoiceSlide({
@@ -507,8 +524,8 @@ export default function Home() {
             <NativeSelectOption value="game-3">
               Game 3 · Name the Price
             </NativeSelectOption>
-            <NativeSelectOption disabled value="game-4">
-              Game 4 · Coming soon
+            <NativeSelectOption value="game-4">
+              Game 4 · Disney Movie Magic
             </NativeSelectOption>
           </NativeSelect>
 
@@ -560,15 +577,19 @@ export default function Home() {
             </div>
             <div className="relative aspect-video bg-[#0c0d16]">
               {round.kind === 'image' ? (
-                <img
-                  alt={
-                    revealed
-                      ? `Movie answer for round ${roundIndex + 1}`
-                      : `Picture puzzle for round ${roundIndex + 1}`
-                  }
-                  className="h-full w-full object-contain"
-                  src={revealed ? round.answerImage : round.questionImage}
-                />
+                revealed && round.answerTitle ? (
+                  <MovieAnswerSlide round={round} />
+                ) : (
+                  <img
+                    alt={
+                      revealed
+                        ? `Movie answer for round ${roundIndex + 1}`
+                        : `Picture puzzle for round ${roundIndex + 1}`
+                    }
+                    className="h-full w-full object-contain"
+                    src={revealed ? round.answerImage : round.questionImage}
+                  />
+                )
               ) : round.kind === 'choice' ? (
                 <ChoiceSlide
                   disabled={Boolean(roundResult)}

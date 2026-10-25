@@ -1,7 +1,8 @@
 export type ImageRound = {
   kind: 'image';
   questionImage: string;
-  answerImage: string;
+  answerImage?: string;
+  answerTitle?: string;
 };
 
 export type ChoiceRound = {
@@ -20,7 +21,7 @@ export type PriceRound = {
 };
 
 export type GameRound = ImageRound | ChoiceRound | PriceRound;
-export type GameId = 'game-1' | 'game-2' | 'game-3';
+export type GameId = 'game-1' | 'game-2' | 'game-3' | 'game-4';
 
 export type GameDefinition = {
   id: GameId;
@@ -40,6 +41,19 @@ const movieRounds: ImageRound[] = Array.from({ length: 15 }, (_, index) => {
     answerImage: `/game1/page-${String(questionPage + 1).padStart(2, '0')}.jpg`,
   };
 });
+
+const disneyMovieRounds: ImageRound[] = [
+  { kind: 'image', questionImage: '/game4/01-frozen.jpg', answerTitle: 'Frozen' },
+  { kind: 'image', questionImage: '/game4/02-lion-king.jpg', answerTitle: 'The Lion King' },
+  { kind: 'image', questionImage: '/game4/03-finding-nemo.jpg', answerTitle: 'Finding Nemo' },
+  { kind: 'image', questionImage: '/game4/04-toy-story.jpg', answerTitle: 'Toy Story' },
+  { kind: 'image', questionImage: '/game4/05-moana.jpg', answerTitle: 'Moana' },
+  { kind: 'image', questionImage: '/game4/06-encanto.jpg', answerTitle: 'Encanto' },
+  { kind: 'image', questionImage: '/game4/07-cars.jpg', answerTitle: 'Cars' },
+  { kind: 'image', questionImage: '/game4/08-coco.jpg', answerTitle: 'Coco' },
+  { kind: 'image', questionImage: '/game4/09-incredibles.jpg', answerTitle: 'The Incredibles' },
+  { kind: 'image', questionImage: '/game4/10-star-wars.jpg', answerTitle: 'Star Wars' },
+];
 
 const foodRounds: ChoiceRound[] = [
   {
@@ -266,5 +280,11 @@ export const games: Record<GameId, GameDefinition> = {
     title: 'Name the Price',
     shortTitle: 'Game 3',
     rounds: priceRounds,
+  },
+  'game-4': {
+    id: 'game-4',
+    title: 'Disney Movie Magic',
+    shortTitle: 'Game 4',
+    rounds: disneyMovieRounds,
   },
 };

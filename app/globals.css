@@ -147,6 +147,60 @@
     #111422;
 }
 
+.movie-answer-slide {
+  position: relative;
+  display: grid;
+  height: 100%;
+  overflow: hidden;
+  place-items: center;
+  isolation: isolate;
+}
+
+.movie-answer-slide > img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  transform: scale(1.035);
+  filter: saturate(.82) brightness(.54) blur(2px);
+}
+
+.movie-answer-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(255 82 111 / 12%), transparent 28%),
+    linear-gradient(180deg, rgb(8 10 22 / 30%), rgb(8 10 22 / 84%));
+}
+
+.movie-answer-copy {
+  max-width: min(92%, 58rem);
+  padding: 2rem;
+  text-align: center;
+  text-shadow: 0 4px 24px rgb(0 0 0 / 55%);
+}
+
+.movie-answer-copy p,
+.movie-answer-copy span {
+  color: rgb(255 255 255 / 76%);
+  font-size: clamp(.68rem, 1.3vw, 1rem);
+  font-weight: 900;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.movie-answer-copy h2 {
+  margin: .35rem 0 .7rem;
+  color: white;
+  font-size: clamp(2.5rem, 8vw, 7rem);
+  font-weight: 950;
+  letter-spacing: -.055em;
+  line-height: .92;
+}
+
 .trivia-photo {
   position: relative;
   min-width: 0;
