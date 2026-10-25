@@ -51,6 +51,12 @@ const contentVersions: Record<GameId, number> = {
   'game-3': 5,
   'game-4': 1,
 };
+const defaultStartingTeams: Record<GameId, Team> = {
+  'game-1': 'A',
+  'game-2': 'A',
+  'game-3': 'A',
+  'game-4': 'A',
+};
 
 function blankProgress(gameId: GameId): GameProgress {
   return {
@@ -232,6 +238,8 @@ export default function Home() {
   const [selectedGame, setSelectedGame] = useState<GameId>('game-1');
   const [progress, setProgress] =
     useState<Record<GameId, GameProgress>>(initialProgress);
+  const [startingTeams, setStartingTeams] =
+    useState<Record<GameId, Team>>(defaultStartingTeams);
   const [revealed, setRevealed] = useState(false);
   const [passed, setPassed] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -246,6 +254,7 @@ export default function Home() {
           selectedGame?: GameId;
           progress?: Partial<Record<GameId, GameProgress>>;
           contentVersions?: Partial<Record<GameId, number>>;
+          startingTeams?: Partial<Record<GameId, Team>>;
         };
         setProgress((current) => {
           const restored = { ...current };
@@ -265,6 +274,16 @@ export default function Home() {
         });
         if (parsed.selectedGame && gameIds.includes(parsed.selectedGame)) {
           setSelectedGame(parsed.selectedGame);
+        }
+        if (parsed.startingTeams) {
+          setStartingTeams((current) => {
+            const restored = { ...current };
+            for (const gameId of gameIds) {
+              const team = parsed.startingTeams?.[gameId];
+              if (team === 'A' || team === 'B') restored[gameId] = team;
+            }
+            return restored;
+          });
         }
       } else {
         const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
@@ -295,9 +314,9 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ contentVersions, selectedGame, progress }),
+      JSON.stringify({ contentVersions, selectedGame, progress, startingTeams }),
     );
-  }, [hydrated, progress, selectedGame]);
+  }, [hydrated, progress, selectedGame, startingTeams]);
 
   const game = games[selectedGame];
   const currentProgress = progress[selectedGame];
@@ -307,7 +326,9 @@ export default function Home() {
   const roundResult = results[roundIndex];
   const completedCount = results.filter(Boolean).length;
   const gameComplete = completedCount === totalRounds;
-  const starter: Team = roundIndex % 2 === 0 ? 'A' : 'B';
+  const gameStartingTeam = startingTeams[selectedGame];
+  const starter: Team =
+    roundIndex % 2 === 0 ? gameStartingTeam : otherTeam(gameStartingTeam);
   const activeTeam = passed ? otherTeam(starter) : starter;
   const availablePoints = passed ? 10 : 20;
   const choiceIsCorrect =
@@ -354,6 +375,17 @@ export default function Home() {
 
   function selectGame(gameId: GameId) {
     setSelectedGame(gameId);
+    setRevealed(false);
+    setPassed(false);
+    setSelectedOption(null);
+    setPriceGuesses({ A: '', B: '' });
+  }
+
+  function chooseStartingTeam(team: Team) {
+    setStartingTeams((current) => ({
+      ...current,
+      [selectedGame]: team,
+    }));
     setRevealed(false);
     setPassed(false);
     setSelectedOption(null);
@@ -509,25 +541,36 @@ export default function Home() {
             </div>
           </div>
 
-          <NativeSelect
-            aria-label="Choose a game"
-            className="order-3 w-full sm:order-none sm:w-auto"
-            onChange={(event) => selectGame(event.target.value as GameId)}
-            value={selectedGame}
-          >
-            <NativeSelectOption value="game-1">
-              Game 1 · Guess the Movie
-            </NativeSelectOption>
-            <NativeSelectOption value="game-2">
-              Game 2 · Taste of India
-            </NativeSelectOption>
-            <NativeSelectOption value="game-3">
-              Game 3 · Name the Price
-            </NativeSelectOption>
-            <NativeSelectOption value="game-4">
-              Game 4 · Disney Movie Magic
-            </NativeSelectOption>
-          </NativeSelect>
+          <div className="order-3 grid w-full grid-cols-2 gap-2 sm:order-none sm:flex sm:w-auto">
+            <NativeSelect
+              aria-label="Choose a game"
+              className="w-full sm:w-auto"
+              onChange={(event) => selectGame(event.target.value as GameId)}
+              value={selectedGame}
+            >
+              <NativeSelectOption value="game-1">
+                Game 1 · Guess the Movie
+              </NativeSelectOption>
+              <NativeSelectOption value="game-2">
+                Game 2 · Taste of India
+              </NativeSelectOption>
+              <NativeSelectOption value="game-3">
+                Game 3 · Name the Price
+              </NativeSelectOption>
+              <NativeSelectOption value="game-4">
+                Game 4 · Disney Movie Magic
+              </NativeSelectOption>
+            </NativeSelect>
+            <NativeSelect
+              aria-label={`Choose which team starts ${game.title}`}
+              className="w-full sm:w-auto"
+              onChange={(event) => chooseStartingTeam(event.target.value as Team)}
+              value={gameStartingTeam}
+            >
+              <NativeSelectOption value="A">Team A starts</NativeSelectOption>
+              <NativeSelectOption value="B">Team B starts</NativeSelectOption>
+            </NativeSelect>
+          </div>
 
           <div
             aria-label={`Score: Team A ${scores.A}, Team B ${scores.B}`}
